@@ -1,0 +1,121 @@
+---
+title: ""
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(gt)
+library(tidyverse)
+
+preds_folder <- "data"
+
+preds_info <- file.info(list.files(preds_folder, full.names = T))
+
+file_name <- preds_info %>% filter(mtime == max(mtime)) %>% rownames()
+  
+tournament_odds <- read_csv(file_name)
+
+image_url <- "https://upload.wikimedia.org/wikipedia/en/thumb/2/26/UEFA_Euro_2024_Logo.svg/220px-UEFA_Euro_2024_Logo.svg.png"
+
+
+```
+
+```{r gt_table, message=FALSE}
+
+gt_odds <- tournament_odds %>% 
+  left_join(countrypops %>% 
+              distinct(team = country_name, country_code_2) %>% 
+              mutate(image_name = paste0(tolower(country_code_2), ".svg"),
+                     team = case_when(
+                       team =="Turkiye" ~ "Türkiye",
+                       team == "Slovak Republic" ~ "Slovakia",
+                       TRUE ~ team
+                     )
+              ) %>% 
+              select(team, image_name)
+  ) %>% 
+  mutate(
+    image_name = case_when(
+      team == "England" ~ "en.png",
+      team == "Scotland" ~ "sco.png",
+      TRUE ~ image_name
+    )
+  ) %>% 
+  select(-team_id, -points, -gd, -goals, -group_rank, -third_place_qual, -last_updated) %>% 
+  gt(rowname_col = "image_name") %>% 
+  tab_header(title = md(paste0("**EURO 2024** <img src='", image_url, "' style = 'height:18px;'>")),
+             subtitle = md(paste0("Predictions as of ",
+                                  format(lubridate::today(), "%d-%m-%y")
+                                  ))
+             ) %>% 
+  tab_spanner(
+    label = "Group Stage",
+    columns = c(group_pos_1, group_pos_2, group_pos_3, group_pos_4)
+  ) %>% 
+  tab_spanner(
+    label = "Knockouts",
+    columns = c(make_r16, make_qf, make_sf, make_final, win) 
+  ) %>% 
+  cols_merge(
+    columns = c("image_name", "team", "group"),
+    pattern = paste("{1} {2}", html("<span style='font-size: 9px; color: #555;'>{3}</span>"))
+  ) %>% 
+  cols_width(
+    starts_with('group_pos') ~ "50px",
+    starts_with('make') ~ "70px",
+    win ~ "70px"
+  ) %>% 
+  cols_label(
+    group = html("Group"),
+    group_pos_1 = html("1st"),
+    group_pos_2 = html("2nd"),
+    group_pos_3 = html("3rd"),
+    group_pos_4 = html("4th"),
+    make_r16 = html("Make R16"),
+    make_qf = html("Make QFs"),
+    make_sf = html("Make SFs"),
+    make_final = html("Make final"),
+    win = html("Winner")
+  ) %>% 
+  fmt(columns = c(group_pos_1, group_pos_2, group_pos_3, group_pos_4,
+                  make_r16, make_qf, make_sf, make_final, win),
+      fns = function(x) {
+        
+        ifelse(x < 0.01, 
+               "<1%", 
+               ifelse(x > 0.99 & x < 1,
+                      ">99%",
+                      paste0(round(100*x,0), "%")
+                      )
+        )
+      }
+  ) %>% 
+  fmt_image(
+    columns = image_name,
+    rows = everything(),
+    height = 15,
+    width = 15,
+    sep = " ",
+    path = "../flags/svg/",
+    file_pattern = "{x}",
+    encode = TRUE
+  ) %>% 
+  cols_align(
+    columns = c(group, group_pos_1, group_pos_2, group_pos_3, group_pos_4,
+                make_r16, make_qf, make_sf, make_final, win),
+    align = "center"
+  ) %>% 
+  data_color(
+    columns = c(starts_with("make"), win),
+    method = "numeric",
+    palette = "LaCroixColoR::PeachPear",
+    reverse = FALSE
+  ) %>% 
+  tab_source_note(source_note = md(
+    "@sophltomlinson"
+  )) %>% 
+  tab_options(table.font.size=12)
+
+gt_odds
+```
