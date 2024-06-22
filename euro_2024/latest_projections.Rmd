@@ -117,5 +117,7 @@ gt_odds <- tournament_odds %>%
   )) %>% 
   tab_options(table.font.size=12)
 
-gt_odds
+gt::gtsave(gt_odds, "images/latest_projections.png")
+
 ```
+![](images/latest_projections.png?raw=true)
