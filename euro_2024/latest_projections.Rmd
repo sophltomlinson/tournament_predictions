@@ -82,7 +82,7 @@ gt_odds <- tournament_odds %>%
                   make_r16, make_qf, make_sf, make_final, win),
       fns = function(x) {
         
-        ifelse(x < 0.01, 
+        ifelse(x < 0.01 & x > 0, 
                "<1%", 
                ifelse(x > 0.99 & x < 1,
                       ">99%",
