@@ -1,5 +1,8 @@
 ### ⚽ Football predictions
 
-[Euros predictions](euro_2024/latest_projections.md)
+Simulations of football tournaments.
 
-Flags from <https://github.com/hampusborgos/country-flags>
+[Euro 2024 predictions](euro_2024/latest_projections.md)
+
+
+Flags used in graphics are from <https://github.com/hampusborgos/country-flags>
